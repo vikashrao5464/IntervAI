@@ -1,9 +1,11 @@
+// Server entry: sets up middleware, routes, and DB connection
 import express from 'express';
-import connectDb from './config/ConnectDb.js';
+import connectDb from './config/connectDb.js';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRouter from './routes/auth.route.js';
+import userRouter from './routes/user.route.js';
 
 dotenv.config();
 
@@ -14,7 +16,8 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-app.use('/api/auth',authRouter)
+app.use('/api/auth',authRouter);
+app.use('/api/user',userRouter);
 const PORT=process.env.PORT || 6000;
 
 
