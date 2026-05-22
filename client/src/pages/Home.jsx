@@ -16,6 +16,7 @@ import resumeImg from '../assets/resume.png'
 import pdfImg from '../assets/pdf.png'
 import analyticsImg from '../assets/history.png'
 import { BsFileEarmarkText } from 'react-icons/bs'
+import Footer from '../components/Footer';
 
 
 function Home() {
@@ -281,6 +282,8 @@ function Home() {
       </div>
 
       {showAuth && <AuthModel onClose={() => setShowAuth(false)} />}
+
+        <Footer/>
     </div>
   )
 }
