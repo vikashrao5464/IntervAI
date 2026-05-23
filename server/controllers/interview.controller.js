@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { askAi } from '../services/ai.service.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { askAi } from '../services/openRouter.service.js';
 
 // Extract text from uploaded PDF and analyze
 export const analyzeResume = async (req, res) => {
@@ -65,7 +66,7 @@ export const analyzeResume = async (req, res) => {
 
         const aiResponse=await askAi(messages);
 
-        const parsed=JSON.parse(aiResponse);
+        const parsed=JSON.parse(aiResponse.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim());
         fs.unlinkSync(filepath)
 
 
