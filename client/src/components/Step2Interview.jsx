@@ -8,7 +8,7 @@ import { useState,useEffect } from 'react';
 import { useRef } from 'react';
 import axios from 'axios';
 import { serverUrl } from '../App';
-import { BsArrowLeft, BsArrowRight } from 'react-icons/bs';
+import { BsArrowRight } from 'react-icons/bs';
 
 
 function Step2Interview({ interviewData, onFinish }) {

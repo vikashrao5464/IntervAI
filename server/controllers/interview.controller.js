@@ -4,6 +4,24 @@ import { askAi } from '../services/openRouter.service.js';
 import User from '../models/user.model.js';
 import Interview from '../models/interview.model.js';
 
+const normalizeExperience = (experience) => {
+    const value = `${experience ?? ''}`.trim();
+    if (!value) return '0 years';
+
+    const numberMatch = value.match(/\d+(?:\.\d+)?/);
+    if (numberMatch) return `${numberMatch[0]} years`;
+
+    const shortText = value
+        .replace(/\b(with|having|skilled in|experienced in)\b.*$/i, '')
+        .trim() || value;
+
+    return shortText
+        .split(/\s+/)
+        .slice(0, 4)
+        .join(' ')
+        .replace(/^./, (char) => char.toUpperCase());
+};
+
 
 // Extract text from uploaded PDF and analyze
 export const analyzeResume = async (req, res) => {
@@ -77,7 +95,7 @@ export const analyzeResume = async (req, res) => {
 
         res.json({
             role: parsed.role,
-            experience: parsed.experience,
+            experience: normalizeExperience(parsed.experience),
             projects: parsed.projects,
             skills: parsed.skills,
             resumeText
@@ -380,5 +398,55 @@ export const finishInterview=async(req,res)=>{
 
     }catch(error){
         return res.status(500).json({message:`failed to finish interview: ${error}`})
+    }
+}
+
+export const getMyInterviews=async(req,res)=>{
+try{
+    const interviews=await Interview.find({userID:req.userId})
+    .sort({createdAt:-1})
+    .select("role experience mode finalScore status createdAt");
+    return res.status(200).json({interviews})
+}catch(error){
+    return res.status(500).json({message:`failed to get interviews: ${error}`})
+}
+}
+
+export const getInterviewReport=async (req,res)=>{
+    try{
+ const interview=await Interview.findById(req.params.id);
+ if(!interview){
+    return res.status(404).json({message:"Interview not found"})
+ }
+  const totalQuestions=interview.questions.length;
+       
+        let totalConfidence=0;
+        let totalCommunication=0;
+        let totalCorrectness=0; 
+
+        interview.questions.forEach(q=>{
+          
+            totalConfidence+=q.confidence || 0;
+            totalCommunication+=q.communication || 0;
+            totalCorrectness+=q.correctness || 0;
+        });
+
+       
+        const avgConfidence=totalQuestions ? (totalConfidence/totalQuestions) : 0;
+        const avgCommunication=totalQuestions ? (totalCommunication/totalQuestions) : 0;
+        const avgCorrectness=totalQuestions ? (totalCorrectness/totalQuestions) : 0;
+
+
+        return res.json({
+            finalScore:interview.finalScore,
+            confidence:Number(avgConfidence.toFixed(1)),
+            communication:Number(avgCommunication.toFixed(1)),
+            correctness:Number(avgCorrectness.toFixed(1)),
+            questionWiseScore:interview.questions
+        })
+
+
+    }catch(error){
+return res.status(500).json({message:`failed to get interview report: ${error}`})
     }
 }
