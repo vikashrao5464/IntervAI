@@ -3,15 +3,21 @@ import { FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react';
 import { motion } from 'motion/react';
+import axios from 'axios';
+import { serverUrl } from '../App';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 function Pricing() {
   const navigate=useNavigate();
   const [selectedPlan,setSelectedPlan]=useState("free");
+  const [loadingPlan,setLoadingPlan]=useState(null);
+  const dispatch=useDispatch();
   const plans=[
     {
       id:"free",
       name:"Free",
-      price:"$4",
+      price:"₹4",
       credits:100,
       description:"Perfect for beginners starting interview preparation.",
       features:[
@@ -25,7 +31,7 @@ function Pricing() {
     {
       id:"basic",
       name:"Basic",
-      price:"$9",
+      price:"₹100",
       credits:250,
       description:"Ideal for users looking to enhance their interview skills.",
       features:[
@@ -39,8 +45,8 @@ function Pricing() {
     {
       id:"pro",
       name:"Pro",
-      price:"$19",
-      credits:500,
+      price:"₹500",
+      credits:1500,
       description:"Best for serious candidates aiming for top-tier interview performance.",
       features:[
         "500 AI Interview Credits",
@@ -51,6 +57,52 @@ function Pricing() {
       badge:"Best Value",
     },
   ];
+
+
+  const handlePayment=async(plan)=>{
+    try{
+      setLoadingPlan(plan.id);
+      const amount=
+      plan.id==="basic" ? 100 : plan.id==="pro" ? 500 : 0;
+     
+
+      const result=await axios.post(serverUrl+"/api/payment/order",{
+        planId:plan.id,
+        amount:amount,
+        credits:plan.credits,
+      },{withCredentials:true});
+     
+
+      const options={
+        key:import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount:result.data.amount,
+        currency:"INR",
+        name:"Interview.AI",
+        description:`${plan.name}-${plan.credits} Credits`,
+        order_id:result.data.id,
+
+        handler:async function (response){
+         const verifypay=await axios.post(serverUrl+"/api/payment/verify",
+          response,{withCredentials:true});
+          dispatch(setUserData(verifypay.data.user));
+          alert("payment successful 🪙 credits added ");
+          navigate("/");
+         
+        },
+        theme:{
+          color:"#10b981",
+        },
+      }
+
+      const rzp=new window.Razorpay(options);
+      rzp.open();
+      setLoadingPlan(null);
+    }catch(error){
+      console.log(error);
+      setLoadingPlan(null);
+      
+    }
+  }
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 to-emerald-500 px-6 py-16'>
       <div className='max-w-6xl mx-auto mb-14 flex items-start gap-4'>
@@ -113,8 +165,18 @@ function Pricing() {
               </div>
 
               {!plan.default && (
-                <button className={`w-full mt-8 py-3 rounded-xl font-semibold transition ${isSelected ? "bg-emerald-600 text-white hover:opacity-90":"bg-gray-100 text-gray-700 hover:bg-emerald-50 "}`}>
-                  {isSelected ? "Proceed to Pay":"Select Plan"}
+                <button 
+                disabled={loadingPlan===plan.id}
+                onClick={(e)=>{e.stopPropagation();
+                  if(!isSelected){
+                    setSelectedPlan(plan.id)
+                  }else{
+                    handlePayment(plan)
+                  }
+                }} className={`w-full mt-8 py-3 rounded-xl font-semibold transition ${isSelected ? "bg-emerald-600 text-white hover:opacity-90":"bg-gray-100 text-gray-700 hover:bg-emerald-50 "}`}>
+                  {loadingPlan===plan.id ? "processing...":isSelected ? "Proceed to Payment":"Select Plan"}
+
+
                 </button>
               )}
 
