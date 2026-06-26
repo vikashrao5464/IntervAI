@@ -169,6 +169,11 @@ Strict Rules:
 - One question per line only.
 - Keep language simple and conversational.
 - Questions must feel practical and realistic.
+- Exactly 3 questions must be related to the candidate's listed skills.
+- Exactly 2 questions must be related to the candidate's listed projects.
+- Questions 1, 2, and 3 must focus on skills from the Skills field.
+- Questions 4 and 5 must focus on projects from the Projects field.
+- If Skills or Projects is "None", use the resume details to infer realistic skill or project questions.
 
 Difficulty progression:
 Question 1 → easy  

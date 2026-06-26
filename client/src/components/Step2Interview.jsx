@@ -25,9 +25,11 @@ function Step2Interview({ interviewData, onFinish }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voiceGender, setVoiceGender] = useState("female");
   const [subtitle,setSubtitle]=useState("");
+  const [isQuestionReady, setIsQuestionReady] = useState(false);
   const videoRef=useRef(null);
 
   const currentQuestion = questions[currentIndex];
+  const isAnswerLocked = isAIPlaying || isSubmitting || !isQuestionReady;
 // load voices and select one
 
   useEffect(()=>{
@@ -147,7 +149,9 @@ function Step2Interview({ interviewData, onFinish }) {
           await speakText('ALright, this one might be a bit more challenging');
         }
 
+        setIsQuestionReady(false);
         await speakText(currentQuestion.question);
+        setIsQuestionReady(true);
 
         if(isMicOn){
           startMic();
@@ -161,6 +165,7 @@ function Step2Interview({ interviewData, onFinish }) {
   useEffect(()=>{
     if(isIntroPhase)return;
     if(isAIPlaying)return;
+    if(!isQuestionReady)return;
   
     if(!currentQuestion)return;
     const timer=setInterval(()=>{
@@ -173,7 +178,7 @@ function Step2Interview({ interviewData, onFinish }) {
       })
     },1000)
     return()=>clearInterval(timer);
-  },[isIntroPhase,currentIndex,isAIPlaying])
+  },[isIntroPhase,currentIndex,isAIPlaying,isQuestionReady])
 
 
   useEffect(()=>{
@@ -251,6 +256,7 @@ setIsSubmitting(false);
 const handleNext=async()=>{
  setFeedback("");
  setAnswer("");
+ setIsQuestionReady(false);
  if(currentIndex+1 >= questions.length){
   finishInterview();
   return;
@@ -284,10 +290,11 @@ console.error("Error finishing interview:",error);
 useEffect(()=>{
 if(isIntroPhase) return;
 if(!currentQuestion) return;
+if(!isQuestionReady) return;
 if(timeLeft==0 && !isSubmitting && !feedback){
  submitAnswer();
 }
-},[timeLeft])
+},[timeLeft,isQuestionReady,isIntroPhase,currentQuestion,isSubmitting,feedback])
 
 
 useEffect(()=>{
@@ -309,25 +316,25 @@ useEffect(()=>{
       flex flex-col lg:flex-row overflow-hidden'>
         {/* {video section} */}
         <div className='w-full lg:w-[35%] bg-white flex flex-col items-center p-6 space-y-6 border-r border-gray-200'>
-          <div className='w-full max-w-md rounded-2xl overflow-hidden shadow-xl'>
+          <div className='relative w-full max-w-md h-64 sm:h-72 rounded-2xl overflow-hidden shadow-xl bg-gray-100'>
             <video src={videoSource}
             key={videoSource}
               ref={videoRef}
               muted
               playsInline
               preload='auto'
-              className='w-full h-auto object-cover'
+              className='absolute inset-0 w-full h-full object-cover'
             />
+
+            <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4'>
+              <p className='text-xs sm:text-sm font-semibold uppercase tracking-wide text-emerald-300'>
+                AI Interview Assistant
+              </p>
+              <p className='mt-1 text-sm sm:text-base font-medium text-white leading-relaxed'>
+                {subtitle || ' '}
+              </p>
+            </div>
           </div>
-
-          {/* subtitle area */}
-
-           {subtitle && (
-            <div className='w-full max-w-md bg-gray-50 border border-gray-200
-            rounded-xl p-4 shadow-sm'>
-              <p className='text-gray-700 text-sm sm:text-base font-mdeium text-center leading-relaxed'>{subtitle}</p>
-              </div>
-           )}
 
           {/* timer area */}
           <div className='w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-5'>
@@ -383,8 +390,9 @@ useEffect(()=>{
             placeholder="Type Your Answer Here..."
             onChange={(e) => setAnswer(e.target.value)}
             value={answer}
+            disabled={isAnswerLocked}
             className='flex-1 bg-gray-100 p-4 sm:p-6 rounded-2xl resize-none outline-none border border-gray-200 focus:ring-2
-           focus:ring-emerald-500 transition text-gray-800'/>
+           focus:ring-emerald-500 transition text-gray-800 disabled:cursor-not-allowed disabled:opacity-60'/>
 
 
           {!feedback ? (
@@ -399,11 +407,11 @@ useEffect(()=>{
 
             <motion.button
             onClick={submitAnswer}
-            disabled={isSubmitting}
+            disabled={isAnswerLocked}
               whileTap={{ scale: 0.95 }}
               className='flex-1 bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 sm:py-4
-                         rounded-2xl shadow-lg hover:opacity-90 transition font-semibold disabled:bg-gray-500'>
-              {isSubmitting ? "Submitting..." : "Submit Answer"}
+                         rounded-2xl shadow-lg hover:opacity-90 transition font-semibold disabled:bg-gray-500 disabled:cursor-not-allowed'>
+              {isAIPlaying ? "AI Speaking..." : isSubmitting ? "Submitting..." : "Submit Answer"}
             </motion.button>
           </div>):(
             <motion.div
