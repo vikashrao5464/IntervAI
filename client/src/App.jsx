@@ -4,7 +4,7 @@ import Home from './pages/Home'
 import Auth from './pages/Auth'
 import { useEffect } from 'react';
 import axios from 'axios';
-export const serverUrl="http://localhost:8000";
+export const serverUrl=import.meta.env.VITE_SERVER_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
 import { useDispatch } from 'react-redux';
 import { setUserData } from './redux/userSlice';
 import InterviewPage from './pages/InterviewPage';
