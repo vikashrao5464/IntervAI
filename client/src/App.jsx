@@ -4,7 +4,7 @@ import Home from './pages/Home'
 import Auth from './pages/Auth'
 import { useEffect } from 'react';
 import axios from 'axios';
-export const serverUrl="http://localhost:8000";
+export const serverUrl="https://intervai-1sr7.onrender.com";
 import { useDispatch } from 'react-redux';
 import { setUserData } from './redux/userSlice';
 import InterviewPage from './pages/InterviewPage';
